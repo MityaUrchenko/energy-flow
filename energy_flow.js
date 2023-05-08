@@ -261,17 +261,16 @@
       }
     }
 
-    let startFlow = (opt) => {
-      opt = Object.assign(options, opt)
+    let startFlow = () => {
       _this.map((container) => {
         createSvg(container)
         createLine(container)
-        let hexagons = createFlow(opt.particles, opt.duration)
+        let hexagons = createFlow(options.particles, options.duration)
         drawFlow(container, hexagons)
         animateFlow(hexagons)
       })
     }
 
-    startFlow(options)
+    startFlow()
   }
 })()
