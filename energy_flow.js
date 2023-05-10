@@ -195,7 +195,6 @@
           symbol: createSymbol(i, scale),
           dir: 0,
           scale: scale,
-          fluctuations: Math.random(),
           speed: randomInterval(speed, speed * 1.10) / 100 * scale,
           x: getRandomXcoordinate(scale),
           y: getRandomYcoordinate(scale),
