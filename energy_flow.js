@@ -8,10 +8,12 @@
       jiggle: 5,
       size: { 'width': 2000, 'height': 300 },
       colors: ['#0E80C0', '#53C1B0', '#52A6DD'],
+      waves: true
     }
 
     let options = Object.assign(defaultOptions, opt)
     options.flowRange = .7
+    options.particleSize = 20
 
 
     let randomInterval = (min, max) => {
@@ -26,8 +28,8 @@
     let getRandomYcoordinate = (scale) => {
       let range = options.size.height -
         (options.size.height * options.flowRange * scale)
-      return randomInterval(range / 2 - 10,
-        options.size.height - range / 2 - 10)
+      return randomInterval(range / 2 - options.particleSize / 2,
+        options.size.height - range / 2 - options.particleSize / 2)
     }
 
     let valueRangeToRange = (value, rangeIn, rangeOut) => {
@@ -139,13 +141,8 @@
     let createHexInner = (i, scale) => {
       let path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
 
-      //hexagon
       path.setAttribute('d',
         'M10 5 L14.3301 7.5 V12.5 L10 15 L5.66987 12.5 V7.5 L10 5Z')
-
-      //star
-      //path.setAttribute('d', 'M10 2L11.1314 8.86863L18 10L11.1314 11.1314L10
-      // 18L8.86863 11.1314L2 10L8.86863 8.86863L10 2Z')
 
       path.setAttribute('style', 'scale: ' + scale + ';')
       path.setAttribute('fill', '#fff')
@@ -156,9 +153,9 @@
       let symbol = document.createElementNS('http://www.w3.org/2000/svg',
         'symbol')
       symbol.setAttribute('id', 'symbol_' + i)
-      symbol.setAttribute('viewBox', '0 0 20 20')
-      symbol.setAttribute('with', '20')
-      symbol.setAttribute('height', '20')
+      symbol.setAttribute('viewBox', `0 0 ${options.particleSize} ${options.particleSize}`)
+      symbol.setAttribute('with', options.particleSize)
+      symbol.setAttribute('height', options.particleSize)
 
       let hex = createHex(i, scale)
       let hexInner = createHexInner(i, scale)
@@ -180,7 +177,7 @@
       let speed = options.size.width / duration
       let fastParticles = count * 0.05
 
-      let hexagons = Array(count).fill({}).map((el, i) => {
+      return Array(count).fill({}).map((el, i) => {
         let scaleValues
 
         if (i < count * .7) {
@@ -217,12 +214,11 @@
 
         return el
       })
-      return hexagons
     }
     let drawFlow = (container, hexagons) => {
       container.querySelector('#symbols').innerHTML = ''
       container.querySelector('#hexagons').innerHTML = ''
-      hexagons.map((el, i) => {
+      hexagons.map((el) => {
         container.querySelector('#symbols').appendChild(el.symbol)
         container.querySelector('#hexagons').appendChild(el.tag)
       })
@@ -258,52 +254,52 @@
         })
       }
     }
-
-
-    let createCurvature = (wavesCount) => {
-      let chunk = options.size.width / wavesCount / 4 // волна состоит из 4-х частей
+    
+    let createCurvature = (curvesCount) => {
+      let numberOfParts = 4
+      let x = 0
+      
+      let chunk = options.size.width / curvesCount / numberOfParts
       let range = 1-options.flowRange
       let minY = (options.size.height - options.size.height*range)/2
       let maxY = options.size.height - minY
 
       let middle = options.size.height / 2
-      let curYmin = randomInterval(minY, middle*0.95)
-      let curYmax = randomInterval(middle*1.05, maxY)
-      let x = 0
+      let curMinY = randomInterval(minY, middle*0.95)
+      let curMaxY = randomInterval(middle*1.05, maxY)
 
-      let curve = `M ${x},${curYmin} C `
-      let screenWave = []
-      for(let i=0;i<wavesCount;i++) {
+      let curve = `M ${x},${curMinY} C `
+      let curveArr = []
+      for(let i=0;i<curvesCount;i++) {
+        curveArr.push( `${x += chunk},${curMinY}` )
+        curMinY = randomInterval(minY, middle*0.95)
+        curMaxY = randomInterval(middle*1.05, maxY)
+        curveArr.push( `${x},${curMaxY}` )
+        curveArr.push( `${x += chunk},${curMaxY}` )
 
-        screenWave.push( `${x += chunk},${curYmin}` )
-        curYmin = randomInterval(minY, middle*0.95)
-        curYmax = randomInterval(middle*1.05, maxY)
-        screenWave.push( `${x},${curYmax}` )
-        screenWave.push( `${x += chunk},${curYmax}` )
-
-        screenWave.push( `${x += chunk},${curYmax}` )
-        screenWave.push( `${x},${curYmin}` )
-        screenWave.push( `${x += chunk},${curYmin}` )
+        curveArr.push( `${x += chunk},${curMaxY}` )
+        curveArr.push( `${x},${curMinY}` )
+        curveArr.push( `${x += chunk},${curMinY}` )
       }
-      curve += screenWave.join(' ')
+      curve += curveArr.join(' ')
       return curve
     }
     let createWaves = (count) => {
       return Array(count).fill({}).map((el, i) => {
-        let wave = {}
-        wave.tag = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+        el = {}
+        el.tag = document.createElementNS('http://www.w3.org/2000/svg', 'path')
 
         let wavesOnScreen = Math.ceil((options.size.width / options.size.height) / 2 )
         let curve = createCurvature(wavesOnScreen)
-        wave.width = options.size.width
-        wave.tag.setAttribute('d',curve)
+        el.width = options.size.width
+        el.tag.setAttribute('d',curve)
 
-        wave.tag.setAttribute('id', 'wave_'+i)
-        wave.tag.setAttribute('fill', 'none')
-        wave.tag.setAttribute('stroke-width', '2')
-        wave.tag.setAttribute('stroke-opacity', '.7')
+        el.tag.setAttribute('id', 'wave_'+i)
+        el.tag.setAttribute('fill', 'none')
+        el.tag.setAttribute('stroke-width', '2')
+        el.tag.setAttribute('stroke-opacity', '.7')
 
-        return wave
+        return el
       })
     }
     let drawWaves = (container, waves) => {
@@ -327,16 +323,15 @@
     let animateWaves = (container, waves) => {
       let style = document.createElementNS('http://www.w3.org/2000/svg', 'style')
       waves.map((el, i) => {
-        let dur = ((el.width-options.size.width) / options.size.width) * options.duration
-        dur = options.duration
-        dur *= (100-(i+1)*10)/100
+        let duration = options.duration
+        duration *= (100-(i+1)*10)/100
         style.innerHTML += `
           #wave_${i} {
             transform: translateY(${randomInterval(-10,10)}px);
           }
           
           [href='#wave_${i}'] {
-            animation: waveStart_${i} ${dur}s linear, wave_${i} ${dur*2}s ${dur}s linear infinite;
+            animation: waveStart_${i} ${duration}s linear, wave_${i} ${duration*2}s ${duration}s linear infinite;
           }
           @keyframes waveStart_${i}{
           /*
@@ -371,7 +366,7 @@
           
           [href='#wave_${i}'].reversed {
             transform: rotateY(180deg);
-            animation: wave_reversed_${i} ${dur*2}s linear infinite;
+            animation: wave_reversed_${i} ${duration*2}s linear infinite;
           }
           @keyframes wave_reversed_${i}{
             0% {
@@ -392,7 +387,6 @@
         drawLine(container)
 
         let waves = createWaves(options.colors.length)
-        //waves = createWaves(1)
         drawWaves(container,waves)
         animateWaves(container,waves)
 
