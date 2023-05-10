@@ -8,7 +8,6 @@
       jiggle: 5,
       size: { 'width': 2000, 'height': 300 },
       colors: ['#0E80C0', '#53C1B0', '#52A6DD'],
-      waves: true
     }
 
     let options = Object.assign(defaultOptions, opt)
@@ -140,8 +139,13 @@
     let createHexInner = (i, scale) => {
       let path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
 
+      //hexagon
       path.setAttribute('d',
         'M10 5 L14.3301 7.5 V12.5 L10 15 L5.66987 12.5 V7.5 L10 5Z')
+
+      //star
+      //path.setAttribute('d', 'M10 2L11.1314 8.86863L18 10L11.1314 11.1314L10
+      // 18L8.86863 11.1314L2 10L8.86863 8.86863L10 2Z')
 
       path.setAttribute('style', 'scale: ' + scale + ';')
       path.setAttribute('fill', '#fff')
@@ -195,6 +199,7 @@
           symbol: createSymbol(i, scale),
           dir: 0,
           scale: scale,
+          fluctuations: Math.random(),
           speed: randomInterval(speed, speed * 1.10) / 100 * scale,
           x: getRandomXcoordinate(scale),
           y: getRandomYcoordinate(scale),
@@ -322,7 +327,8 @@
     let animateWaves = (container, waves) => {
       let style = document.createElementNS('http://www.w3.org/2000/svg', 'style')
       waves.map((el, i) => {
-        let dur = options.duration
+        let dur = ((el.width-options.size.width) / options.size.width) * options.duration
+        dur = options.duration
         dur *= (100-(i+1)*10)/100
         style.innerHTML += `
           #wave_${i} {
@@ -333,6 +339,18 @@
             animation: waveStart_${i} ${dur}s linear, wave_${i} ${dur*2}s ${dur}s linear infinite;
           }
           @keyframes waveStart_${i}{
+          /*
+            0% {
+              stroke-dasharray: 0 2000;
+              stroke-dashoffset: 0;
+              translate: 0
+            }
+            100% {
+              stroke-dasharray: 2000 0;
+              stroke-dashoffset: 3000;
+              translate: ${el.width}px
+            }
+            */
             0% {
               stroke-dasharray: 0 10000;
               translate: 0
@@ -373,11 +391,10 @@
         createSvg(container)
         drawLine(container)
 
-        if(options.waves) {
-          let waves = createWaves(options.colors.length)
-          drawWaves(container, waves)
-          animateWaves(container, waves)
-        }
+        let waves = createWaves(options.colors.length)
+        //waves = createWaves(1)
+        drawWaves(container,waves)
+        animateWaves(container,waves)
 
         let hexagons = createFlow(options.particles, options.duration)
         drawFlow(container, hexagons)
